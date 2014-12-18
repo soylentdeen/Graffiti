@@ -86,6 +86,9 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
         QtCore.QObject.connect(self.ui.HO_GainSelector, QtCore.SIGNAL("clicked()"), self.gainSelector)
         QtCore.QObject.connect( self.ui.SetGain, QtCore.SIGNAL("clicked()"), self.setGain)  # Connects the "Take Background" button with the correct plumbing
 
+        self.DM_Gui = GuiTools.DM_Gui(self.ui.DMPlotWindow)
+
+
         """
         #Initialize attributes of the GUI
         self.ui.nbPushed = 0 # nb of times the push button was pushed
@@ -121,6 +124,11 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
         #End of GUI Class initialization
 
         #"""
+
+    def initialize(self):
+        #print "Hi"
+        updateDMPos()
+        
             
     def measureBackground(self):
         print "Let's measure a background!"
@@ -323,11 +331,14 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
 
 
 
-def pliInGui(data, color='gist_earth', win=1):
- 
-    exec("wp.ui.window"+str(win)+".canvas.axes.clear()")
-    exec("wp.ui.window"+str(win)+".canvas.axes.matshow(data.transpose(), aspect='auto',cmap=color, origin='lower')")
-    exec("wp.ui.window"+str(win)+".canvas.draw()")
+def updateDMPos(color='gist_earth'):
+    exec("wp.ui.DMPlotWindow.canvas.axes.clear()")
+    exec("wp.ui.DMPlotWindow.canvas.axes.matshow(wp.DM_Gui.pixels.transpose(), aspect='auto', origin='lower')")
+    exec("wp.ui.DMPlotWindow.canvas.draw()")
+    #wp.DM_Gui.drawMap()
+    print "updated DM Positions"
+    #DMPos = 'junk'#aortc.get_HO_ACT_POS_REF_MAP()
+
 
 
 
@@ -355,7 +366,9 @@ aortc = VLTTools.VLTConnection(hostname=hostname, username=username)
 
 app = QApplication([]) #Defines that the app is a Qt application
 wp = Graffiti_ui_class(aortc = aortc) # !!!!!!!    THE GUI REALLY STARTS HERE   !!!!!!
+wp.initialize()  # Can I initialize here?
 wp.show() # shows the GUI (can be hidden by typing wp.hide())
+
 
 
 print "Graffiti loaded."

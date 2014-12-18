@@ -56,6 +56,13 @@ class VLTConnection( object ):
             print("VLT Connection in Simulation mode.  The command I would have sent is:")
             print(command)
 
+    def get_HO_ACT_POS_REF_MAP(self):
+        name = self.CDMS.maps["HOCtr.ACT_POS_REF_MAP"].outfile
+        command = "cdmsSave -f "+self.remotepath+name+" HOCtr.ACT_POS_REF_MAP"
+        self.sendCommand(command)
+        self.ftp.get(self.remotepath+name, self.localpath+name)
+        return pyfits.getdata(self.localpath+name)
+
     def set_new_HO_flat_map(self, pattern):
         self.CDMS.maps["HOCtr.ACT_POS_REF_MAP"].replace(pattern)
         self.CDMS.maps["HOCtr.ACT_POS_REF_MAP"].write(path=self.localpath)
@@ -89,62 +96,6 @@ class VLTConnection( object ):
     def set_HO_gain(self, gain):
         self.sendCommand("msgSend \"\" CDMSGateway SETMAP \"-object HOCtr.TERM_B -function 0,0="+str("%.2g" % gain)+"\"")
         self.sendCommand("msgSend \"\" spaccsServer EXEC \"-command HOCtr.update ALL\"")
-
-    def set_gain(self, gain):
-        termA = numpy.array([-1], dtype='float32')
-        termB = gain*(numpy.array([-1.0, 0.0], dtype='float32'))
-        self.CDMS.maps["HOCtr.TERM_A"].replace(termA)
-        self.CDMS.maps["HOCtr.TERM_B"].replace(termB)
-        self.CDMS.maps["HOCtr.TERM_A"].write(path=self.localpath)
-        self.CDMS.maps["HOCtr.TERM_B"].write(path=self.localpath)
-        nameA = self.CDMS.maps["HOCtr.TERM_A"].outfile
-        nameB = self.CDMS.maps["HOCtr.TERM_B"].outfile
-        self.ftp.put(self.localpath+nameA, self.remotepath+nameA)
-        self.ftp.put(self.localpath+nameB, self.remotepath+nameB)
-        stdin, stdout, stderr = self.ssh.exec_command("cdmsLoad -f "+self.remotepath+nameA+" HOCtr.TERM_A --rename")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-        stdin, stdout, stderr = self.ssh.exec_command("cdmsLoad -f "+self.remotepath+nameB+" HOCtr.TERM_B --rename")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-        termB = gain*(numpy.array([-1.0, 0.0], dtype='float32'))
-        self.CDMS.maps["TTCtr.TERM_A"].replace(termA)
-        self.CDMS.maps["TTCtr.TERM_B"].replace(termB)
-        self.CDMS.maps["TTCtr.TERM_A"].write(path=self.localpath)
-        self.CDMS.maps["TTCtr.TERM_B"].write(path=self.localpath)
-        nameA = self.CDMS.maps["TTCtr.TERM_A"].outfile
-        nameB = self.CDMS.maps["TTCtr.TERM_B"].outfile
-        self.ftp.put(self.localpath+nameA, self.remotepath+nameA)
-        self.ftp.put(self.localpath+nameB, self.remotepath+nameB)
-        stdin, stdout, stderr = self.ssh.exec_command("cdmsLoad -f "+self.remotepath+nameA+" TTCtr.TERM_A --rename")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-        stdin, stdout, stderr = self.ssh.exec_command("cdmsLoad -f "+self.remotepath+nameB+" TTCtr.TERM_B --rename")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-
-    def make_TT_unscr(self):
-        self.CDMS.maps["TTCtr.SEC_ACT_UNSCR_MAP"].write(path=self.localpath)
-        name = self.CDMS.maps["TTCtr.SEC_ACT_UNSCR_MAP"].outfile
-        self.ftp.put(self.localpath+name, self.remotepath+name)
-        stdin, stdout, stderr = self.ssh.exec_command("cdmsLoad -f "+self.remotepath+name+" TTCtr.SEC_ACT_UNSCR_MAP --rename")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
 
     def set_CommandMatrix(self, pattern):
         self.CDMS.maps["Recn.REC1.CM"].replace(pattern)

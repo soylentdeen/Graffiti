@@ -24,7 +24,7 @@ except AttributeError:
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(_fromUtf8("Graffiti"))
+        MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(800, 600)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
@@ -48,9 +48,12 @@ class Ui_MainWindow(object):
         self.Both_GainSelector = QtGui.QRadioButton(self.centralwidget)
         self.Both_GainSelector.setGeometry(QtCore.QRect(160, 110, 51, 20))
         self.Both_GainSelector.setObjectName(_fromUtf8("Both_GainSelector"))
+        self.DMPlotWindow = MatplotlibWidget(self.centralwidget)
+        self.DMPlotWindow.setGeometry(QtCore.QRect(280, 40, 320, 320))
+        self.DMPlotWindow.setObjectName(_fromUtf8("DMPlotWindow"))
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 20))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
@@ -61,7 +64,7 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "Graffiti", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.BackgroundButton.setText(_translate("MainWindow", "Take Background", None))
         self.Gain.setToolTip(_translate("MainWindow", "Gain", None))
         self.SetGain.setText(_translate("MainWindow", "Set Gain", None))
@@ -69,3 +72,4 @@ class Ui_MainWindow(object):
         self.HO_GainSelector.setText(_translate("MainWindow", "HODM", None))
         self.Both_GainSelector.setText(_translate("MainWindow", "Both", None))
 
+from GuiTools import MatplotlibWidget
