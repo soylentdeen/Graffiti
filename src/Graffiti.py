@@ -42,7 +42,7 @@ from PyQt4.QtGui import *
 
 # From the "automatically generated" demo_ui.py file (see above) it imports the "Ui_demo_qt" class that defines everything that was created in the Qt GUI file (demo.ui). Do NOT change anything in the demo_ui file. If you want to change something in the GUI, use Qt designer to edit the demo.ui file and re-run the command: "pyuic4 demo.ui -o demo_ui.py" again.
 # Note: The "Ui_demo_qt" name was choosen from the name the user put in the QMainWindow (see demo.ui) in which the pyuic4 command added Ui_ suffix.
-from Graffiti_ui import Ui_MainWindow #Required
+from Graffiti_ui import Ui_Graffiti #Required
 
 import pdb # Enter in the debug mode by placing :  pdb.set_trace() in your program. Note ipython enables it automatically by entering %pdb
 # See also debug mode explanation here:
@@ -69,24 +69,26 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
     def __init__( self, parent=None, aortc=None ): # This is what happens when an object of this class is called. It's a kind of init.
         QtGui.QWidget.__init__( self, parent )
         self.aortc = aortc   # aortc is the VLT Connection to the work station
-        self.ui = Ui_MainWindow() #ui. is the GUI
+        self.ui = Ui_Graffiti() #ui. is the GUI
         self.ui.setupUi( self ) # Just do it
         
-        self.SelectedGain = 0
+        self.TTGain = False
+        self.HOGain = False
 
         QtCore.QObject.connect( self.ui.BackgroundButton, QtCore.SIGNAL("clicked()"), self.measureBackground)  # Connects the "Take Background" button with the correct plumbing
 
-        self.ui.GainSelectorGroup = QButtonGroup()
-        self.ui.GainSelectorGroup.addButton(self.ui.Both_GainSelector)   # How do I set this to default?
-        self.ui.GainSelectorGroup.addButton(self.ui.TT_GainSelector)
-        self.ui.GainSelectorGroup.addButton(self.ui.HO_GainSelector)
-        
-        QtCore.QObject.connect(self.ui.Both_GainSelector, QtCore.SIGNAL("clicked()"), self.gainSelector)
-        QtCore.QObject.connect(self.ui.TT_GainSelector, QtCore.SIGNAL("clicked()"), self.gainSelector)
-        QtCore.QObject.connect(self.ui.HO_GainSelector, QtCore.SIGNAL("clicked()"), self.gainSelector)
-        QtCore.QObject.connect( self.ui.SetGain, QtCore.SIGNAL("clicked()"), self.setGain)  # Connects the "Take Background" button with the correct plumbing
+        self.ui.group = QButtonGroup(exclusive=False)
+        self.ui.group.addButton(self.ui.TT_GainSelector)
+        self.ui.group.addButton(self.ui.HO_GainSelector)
 
-        self.DM_Gui = GuiTools.DM_Gui(self.ui.DMPlotWindow)
+        QtCore.QObject.connect(self.ui.TT_GainSelector,
+                QtCore.SIGNAL("clicked()"), self.gainSelector)
+        QtCore.QObject.connect(self.ui.HO_GainSelector,
+                QtCore.SIGNAL("clicked()"), self.gainSelector)
+        QtCore.QObject.connect( self.ui.SetGain, QtCore.SIGNAL("clicked()"),
+                self.setGain)
+
+        self.DM_Gui = GuiTools.DM_Gui(aortc=aortc)
 
 
         """
@@ -139,27 +141,20 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
         self.aortc.updateAcq()
 
     def gainSelector(self):
-        if(self.ui.Both_GainSelector.isChecked()):
-            self.SelectedGain = 0
-        elif(self.ui.TT_GainSelector.isChecked()):
-            self.SelectedGain = 1
-        elif(self.ui.HO_GainSelector.isChecked()):
-            self.SelectedGain = 2
+        if(self.ui.TT_GainSelector.isChecked()):
+            self.TTGain = True
+        if(self.ui.HO_GainSelector.isChecked()):
+            self.HOGain = True
 
 
     def setGain(self):
         try:
             gain = self.ui.Gain.text().toFloat()[0]
             if (gain < 1.0) & (gain > 0.0):
-                if self.SelectedGain == 0:
+                if self.TTGain:
                     self.aortc.set_TT_gain(-gain)
+                if self.HOGain:
                     self.aortc.set_HO_gain(-gain)
-                elif self.SelectedGain == 1:
-                    self.aortc.set_TT_gain(-gain)
-                elif self.SelectedGain == 2:
-                    self.aortc.set_HO_gain(-gain)
-                else:
-                    print("How in the world did I get here?")
             else:
                 print("Error! Gain must be between 1.0 and 0.0!!")
         except:
@@ -333,8 +328,22 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
 
 def updateDMPos(color='gist_earth'):
     exec("wp.ui.DMPlotWindow.canvas.axes.clear()")
-    exec("wp.ui.DMPlotWindow.canvas.axes.matshow(wp.DM_Gui.pixels.transpose(), aspect='auto', origin='lower')")
+    exec("wp.ui.DMPlotWindow.canvas.axes.matshow(wp.DM_Gui.pixels.transpose(), aspect='auto', origin='lower', cmap=color, vmin=-1.0, vmax=1.0)")
+    exec("wp.ui.DMPlotWindow.canvas.axes.set_xticks([])")
+    exec("wp.ui.DMPlotWindow.canvas.axes.set_yticks([])")
+    exec("wp.ui.DMPlotWindow.canvas.axes.set_xticklabels([])")
+    exec("wp.ui.DMPlotWindow.canvas.axes.set_yticklabels([])")
     exec("wp.ui.DMPlotWindow.canvas.draw()")
+    for i in range(len(wp.DM_Gui.HOactuators)):
+        x = str(wp.DM_Gui.HOactuators[i].xTextAnchor)
+        y = str(wp.DM_Gui.HOactuators[i].yTextAnchor)
+        txt = str(wp.DM_Gui.HOactuators[i])
+        exec("wp.ui.DMPlotWindow.canvas.axes.text("+x+", "+y+", '"+txt+"')")
+    for i in range(len(wp.DM_Gui.TTactuators)):
+        x = str(wp.DM_Gui.TTactuators[i].xTextAnchor)
+        y = str(wp.DM_Gui.TTactuators[i].yTextAnchor)
+        txt = str(wp.DM_Gui.TTactuators[i])
+        exec("wp.ui.DMPlotWindow.canvas.axes.text("+x+", "+y+", '"+txt+"')")
     #wp.DM_Gui.drawMap()
     print "updated DM Positions"
     #DMPos = 'junk'#aortc.get_HO_ACT_POS_REF_MAP()
@@ -362,7 +371,8 @@ def updateDMPos(color='gist_earth'):
 hostname = "aortc3"
 username = "spacimgr"
 
-aortc = VLTTools.VLTConnection(hostname=hostname, username=username)
+aortc = VLTTools.VLTConnection(hostname=hostname, username=username,
+        simulate=True)
 
 app = QApplication([]) #Defines that the app is a Qt application
 wp = Graffiti_ui_class(aortc = aortc) # !!!!!!!    THE GUI REALLY STARTS HERE   !!!!!!

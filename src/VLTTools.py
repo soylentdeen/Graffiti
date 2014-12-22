@@ -60,7 +60,16 @@ class VLTConnection( object ):
         name = self.CDMS.maps["HOCtr.ACT_POS_REF_MAP"].outfile
         command = "cdmsSave -f "+self.remotepath+name+" HOCtr.ACT_POS_REF_MAP"
         self.sendCommand(command)
-        self.ftp.get(self.remotepath+name, self.localpath+name)
+        if not(self.sim):
+            self.ftp.get(self.remotepath+name, self.localpath+name)
+        return pyfits.getdata(self.localpath+name)
+
+    def get_TT_ACT_POS_REF_MAP(self):
+        name = self.CDMS.maps["TTCtr.ACT_POS_REF_MAP"].outfile
+        command = "cdmsSave -f "+self.remotepath+name+" TTCtr.ACT_POS_REF_MAP"
+        self.sendCommand(command)
+        if not(self.sim):
+            self.ftp.get(self.remotepath+name, self.localpath+name)
         return pyfits.getdata(self.localpath+name)
 
     def set_new_HO_flat_map(self, pattern):
@@ -140,31 +149,18 @@ class VLTConnection( object ):
             else:
                 print("Error!  Unrecognized tap point!")
                 escape
-            stdin, stdout, stderr = self.ssh.exec_command("cdmsSetProp Acq.CFG.DYNAMIC DET1.PIXEL_TAP -s \""+tp+"\"")
-            while not stdout.channel.exit_status_ready():
-                if stdout.channel.recv_ready():
-                    rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                    if len(rl) > 0:
-                        print stdout.channel.recv(1024)
+            command="cdmsSetProp Acq.CFG.DYNAMIC DET1.PIXEL_TAP -s \""+tp+"\""
+            self.sendCommand(command)
         except:
             print("Error!  Invalid tap point!")
 
     def measureBackground(self, nframes):
-        stdin, stdout, stderr = self.ssh.exec_command("msgSend \"\" CommandGateway EXEC \"AcqOptimiser.measureBackground "+str(nframes)+"\"")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
+        command = "msgSend \"\" CommandGateway EXEC \"AcqOptimiser.measureBackground "+str(nframes)+"\""
+        self.sendCommand(command)
 
     def updateAcq(self):
-        stdin, stdout, stderr = self.ssh.exec_command("msgSend \"\" spaccsServer EXEC \"-command Acq.update ALL\"")
-        while not stdout.channel.exit_status_ready():
-            if stdout.channel.recv_ready():
-                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-    
+        command = "msgSend \"\" spaccsServer EXEC \"-command Acq.update ALL\""
+        self.sendCommand(command)
 
 class CDMS_Map( object ):
     def __init__(self, name, ax1, ax2, dtype, filltype, bscale):
