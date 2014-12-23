@@ -23,10 +23,11 @@ class VLTConnection( object ):
         """
         self.hostname = hostname
         self.username = username
-        self.ssh = paramiko.SSHClient()
-        self.ssh.load_system_host_keys()
-        self.ssh.connect(self.hostname, username=self.username)
-        self.ftp = self.ssh.open_sftp()
+        if not(simulate):
+            self.ssh = paramiko.SSHClient()
+            self.ssh.load_system_host_keys()
+            self.ssh.connect(self.hostname, username=self.username)
+            self.ftp = self.ssh.open_sftp()
         self.localpath = './data/'
         self.remotepath = './local/test/'
         self.CDMS = CDMS()
