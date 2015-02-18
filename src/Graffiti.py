@@ -16,6 +16,7 @@ Launch the GUI using the command (in terminal):
 - demo.ui is an XML file, modifiable/editable in a friendly user manner with - Qt Designer or Qt creator (comes with Qt installation).
 - demo_ui.py is the PyQt Python file, generated with the terminal command :
   > pyuic4 demo.ui -o demo_ui.py (pyuic4 comes with PyQt package)
+  > python /usr/lib64/python/site-packages/PyQt4/uic/pyuic.py Graffiti.ui -o Graffiti_ui.py
   This command has to be typed each time the GUI is modified in order to take into account the changes in PyQt (this program).
   Note: Once generated DO NOT EDIT the demo_ui.py file. Only PyQtDemo.py (this file) can be edited safely.
   
@@ -74,8 +75,20 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
         
         self.TTGain = False
         self.HOGain = False
+        
+        # Connects the "Take Background" button with the correct plumbing
+        QtCore.QObject.connect( self.ui.BackgroundButton,
+                QtCore.SIGNAL("clicked()"), self.measureBackground)
 
-        QtCore.QObject.connect( self.ui.BackgroundButton, QtCore.SIGNAL("clicked()"), self.measureBackground)  # Connects the "Take Background" button with the correct plumbing
+        # Connect the "Tip" button with the correct plumbing
+        self.readTip()
+        QtCore.QObject.connect( self.ui.TipButton, QtCore.SIGNAL("clicked()"),
+                self.adjustTip)
+
+        # Connect the "Tilt" button with the correct plumbing
+        self.readTilt()
+        QtCore.QObject.connect( self.ui.TiltButton, QtCore.SIGNAL("clicked()"),
+                self.adjustTilt)
 
         self.ui.group = QButtonGroup(exclusive=False)
         self.ui.group.addButton(self.ui.TT_GainSelector)
@@ -170,6 +183,32 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
 
         """
         
+    def readTip(self):
+        self.ui.Tip_SpinBox.setValue(self.aortc.get_Tip())
+
+    def readTilt(self):
+        self.ui.Tilt_SpinBox.setValue(self.aortc.get_Tilt())
+
+    def adjustTip(self):
+        try:
+            tip = self.ui.Tip_SpinBox.value()
+            if (tip < 1.0) & (tip > -1.0):
+                self.aortc.setTip(tip)
+            else:
+                print("Error! Tip must be between -1.0 and 1.0!")
+        except:
+            print("Error! Something's wrong with getting value from Tip_SpinBox")
+
+    def adjustTilt(self):
+        try:
+            tilt = self.ui.Tilt_SpinBox.value()
+            if (tilt < 1.0) & (tilt > -1.0):
+                self.aortc.setTilt(tilt)
+            else:
+                print("Error! Tilt must be between -1.0 and 1.0!")
+        except:
+            print("Error! Something's wrong with getting value from Tilt_SpinBox")
+
     def theButtonIsPushed(self):
     #=========================================================================================
     #          This method is called when the push button is clicked
@@ -369,10 +408,10 @@ def updateDMPos(color='gist_earth'):
 #==============================================================================================================     
 
 hostname = "aortc3"
-username = "spacimgr"
+username = "ciaomgr"
 
 aortc = VLTTools.VLTConnection(hostname=hostname, username=username,
-        simulate=True)
+        simulate=False)
 
 app = QApplication([]) #Defines that the app is a Qt application
 wp = Graffiti_ui_class(aortc = aortc) # !!!!!!!    THE GUI REALLY STARTS HERE   !!!!!!
