@@ -80,13 +80,10 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
         QtCore.QObject.connect( self.ui.BackgroundButton,
                 QtCore.SIGNAL("clicked()"), self.measureBackground)
 
-        # Connect the "Tip" button with the correct plumbing
-        self.readTip()
+        self.readTipTilt()
+        # Connect the "Tip" and "Tilt" buttons with the correct plumbing
         QtCore.QObject.connect( self.ui.TipButton, QtCore.SIGNAL("clicked()"),
                 self.adjustTip)
-
-        # Connect the "Tilt" button with the correct plumbing
-        self.readTilt()
         QtCore.QObject.connect( self.ui.TiltButton, QtCore.SIGNAL("clicked()"),
                 self.adjustTilt)
 
@@ -183,11 +180,10 @@ class Graffiti_ui_class( QtGui.QMainWindow ):
 
         """
         
-    def readTip(self):
-        self.ui.Tip_SpinBox.setValue(self.aortc.get_Tip())
-
-    def readTilt(self):
-        self.ui.Tilt_SpinBox.setValue(self.aortc.get_Tilt())
+    def readTipTilt(self):
+        tip, tilt = self.aortc.get_TipTilt()
+        self.ui.Tip_SpinBox.setValue(tip)
+        self.ui.Tilt_SpinBox.setValue(tilt)
 
     def adjustTip(self):
         try:
